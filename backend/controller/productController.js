@@ -21,17 +21,18 @@ export async function getAllProduct(req, res) {
 export async function addproduct(req, res) {
     try {
 
-        const newuser = await Product.create({
+        const newproduct = await Product.create({
             title: req.body.title,
             description: req.body.description,
             price: req.body.price,
             slug: req.body.slug,
             discount_price: req.body.discount_price,
+            image: req.file ? req.file.filename : "",
         });
 
         res.status(201).json({
-            data: newuser,
-            message: "User added successfully",
+            data: newproduct,
+            message: "Product added successfully",
         });
     } catch (error) {
         res.status(500).json({
@@ -49,7 +50,7 @@ export async function updateProduct(req, res) {
 
     if (!Products) {
         return res.json({
-            message: "user not found",
+            message: "Product not found",
         });
     }
     Products.title = updatedData.title;
@@ -68,11 +69,25 @@ export async function updateProduct(req, res) {
 
 export async function bulkCreate(req, res) {
     try {
-        const Products = await Product.insertMany(req.body);
+
+        const productsWithSlug = req.body.map((product) => ({
+            ...product,
+            slug: product.title
+                .toLowerCase()
+                .trim()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-|-$/g, ""),
+        }));
+
+        const Products = await Product.insertMany(
+            productsWithSlug
+        );
+
         res.status(201).json({
             message: "Bulk data added successfully",
             data: Products,
         });
+
     } catch (err) {
         res.status(400).json({
             message: err.message,
